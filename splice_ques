@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Prepare output directories
+mkdir spliced
+
+# Clean up the image
+convert $1 -resize x800 spliced/$1
+textcleaner -c 0,72,0,36 -g -e stretch -f 20 -o 20 -t 30 -u -s 0 -T -p 20 spliced/$1 spliced/$1
+
+# Trim it from all sides
+smarttrim -m std -f 60 -s 485x695 -r yes spliced/$1 spliced/$1
+
+# Cut into 2 equal columns
+convert spliced/$1 -crop 240x695+0+0 spliced/${1}_1.jpg
+convert spliced/$1 -crop 240x695+240+0 spliced/${1}_2.jpg
+
+# Now cut the individual columns into individual questions
+mkdir spliced/ques
+#./ind_cut spliced/${1}_1.jpg ./spliced/ques 30 20x40 1
+#./ind_cut spliced/${1}_2.jpg ./spliced/ques 30 20x40 1
