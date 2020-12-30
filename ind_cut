@@ -1,0 +1,94 @@
+#!/bin/bash
+#set -x
+if [ $# -lt 2 ]; then
+  cat <<-EOF
+    $0 : Uses a index number near the start of the line to splice
+    the document into smaller documents. Use it for splicing Allen
+    questions.
+
+    Note: The implementation is atleast O(n) on the height of the document
+    so, resize before giving them the splice. Also, please deskew the image
+    before giving it here. If you don't, you'll have to increase the margin,
+    but there is more white than black there, so you will have to set very high
+    thresholds but it won't work due to all the unwanted whiteness present.
+
+    The threshold is the same threshold passed onto imagemagick. Specify it
+    (0-100) WITHOUT a %.
+
+    The blur is also a imagemagick blur, specify it as (radius)x(sigma).
+
+    The margin is the percentage of the width that contains the index numbers.
+    A margin of 2 is 0.02% for the script.
+
+    If you face any trouble with it not splitting up things,
+    run
+    convert infile -crop {margin*width}x{height}+0+0 -blur {blur} -auto-level \
+      -threshold {threshold}% -scale 1x{height}! mask.jpg 
+
+    Usage: $0 input-file output-dir threshold blur margin
+
+    Example
+    $0 file1.jpg ./out 60 40x80 2
+EOF
+exit
+fi
+infile=$1
+outdir=$2
+threshold=$3
+blur=$4
+margin=$5
+
+# Setup a temporary directory for our work
+tmpdir=`mktemp -d "./ind_cut.XXXXXXXX"`
+trap 'rm -rf "$tmpdir"' 0 # Remove temp dir on exit
+trap 'exit 2' 1 2 3 15
+
+width=`convert "$infile" -format '%[width]' info:`
+index=`expr $width \* $margin`
+index=`bc <<< "scale=0; $index / 100"`
+height=`convert "$infile" -format '%[height]' info:`
+
+convert $infile -crop ${index}x${height}+0+0 -blur $blur -auto-level \
+  -threshold $threshold% -scale 1x${height}! $tmpdir/mask.mpc 
+
+# Give a preview to the user
+convert $tmpdir/mask.mpc -scale ${width}x${height}! -threshold $threshold -edge .5 -blur 0x.5 $tmpdir/prev_mask.png
+convert $infile \( $tmpdir/prev_mask.png -negate \) -compose Multiply -composite gif: | display
+
+row=0
+marker=0
+declare -a cuts # Store the cuts in an array
+while [ $row -lt $height ]
+do
+  color=`convert $tmpdir/mask.mpc -crop 0x1+0+$row +repage -format '%[pixel:s]\n' info:`
+  if [ $marker -eq 0 ]
+  then
+    if [ "$color" = "black" ]
+    then
+      # Found a question
+      cuts+=($row)
+      marker=1
+    fi
+  else
+    # Cut already found, marker is set, now to reset it
+    if [ "$color" = "white" ]
+    then
+      marker=0
+    fi
+  fi
+  row=`expr $row + 1`
+done
+
+# The last cut is the height itself
+cuts+=($height)
+
+# Splice the image
+i=0
+while [ $i -lt `expr ${#cuts[@]} - 1` ]
+do
+  next=${cuts[$i+1]} 
+  convert $infile -crop ${width}x`expr $next - ${cuts[$i]}`+0+${cuts[$i]} $outdir/${infile}_$i.png
+  i=`expr $i + 1`
+done
+
+#set +x
