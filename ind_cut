@@ -55,6 +55,13 @@ convert $infile -crop ${index}x${height}+0+0 -blur $blur -auto-level \
 convert $tmpdir/mask.mpc -scale ${width}x${height}! -threshold $threshold -edge .5 -blur 0x.5 $tmpdir/prev_mask.png
 convert $infile \( $tmpdir/prev_mask.png -negate \) -compose Multiply -composite gif: | display
 
+echo "Continue (Y/n)?\n"
+read proceed
+
+if [ "$proceed" = "n" ]; then
+  exit 0
+fi
+
 row=0
 marker=0
 declare -a cuts # Store the cuts in an array
