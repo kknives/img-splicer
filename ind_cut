@@ -48,14 +48,14 @@ index=`expr $width \* $margin`
 index=`bc <<< "scale=0; $index / 100"`
 height=`convert "$infile" -format '%[height]' info:`
 
-convert $infile -crop ${index}x${height}+0+0 -blur $blur -auto-level \
-  -threshold $threshold% -scale 1x${height}! $tmpdir/mask.mpc 
+convert $infile +repage -crop ${index}x${height}+0+0 -blur $blur -auto-level \
+  -threshold $threshold% -scale 1x${height}! -colorspace Gray $tmpdir/mask.mpc 
 
 # Give a preview to the user
 convert $tmpdir/mask.mpc -scale ${width}x${height}! -threshold $threshold -edge .5 -blur 0x.5 $tmpdir/prev_mask.png
 convert $infile \( $tmpdir/prev_mask.png -negate \) -compose Multiply -composite gif: | display
 
-echo "Continue (Y/n)?\n"
+echo "Continue (Y/n)?"
 read proceed
 
 if [ "$proceed" = "n" ]; then
@@ -67,18 +67,19 @@ marker=0
 declare -a cuts # Store the cuts in an array
 while [ $row -lt $height ]
 do
-  color=`convert $tmpdir/mask.mpc -crop 0x1+0+$row +repage -format '%[pixel:s]\n' info:`
+  color=`convert $tmpdir/mask.mpc +repage -crop 0x1+0+$row -format '%[pixel:s]\n' info:`
   if [ $marker -eq 0 ]
   then
-    if [ "$color" = "black" ]
+    if [ "$color" = "gray(0)" ]
     then
       # Found a question
       cuts+=($row)
+      echo "Found question at $row"
       marker=1
     fi
   else
     # Cut already found, marker is set, now to reset it
-    if [ "$color" = "white" ]
+    if [ "$color" != "gray(0)" ]
     then
       marker=0
     fi
@@ -94,7 +95,7 @@ i=0
 while [ $i -lt `expr ${#cuts[@]} - 1` ]
 do
   next=${cuts[$i+1]} 
-  convert $infile -crop ${width}x`expr $next - ${cuts[$i]}`+0+${cuts[$i]} $outdir/${infile}_$i.png
+  convert $infile +repage -crop ${width}x`expr $next - ${cuts[$i]}`+0+${cuts[$i]} $outdir/$(basename ${infile})_$i.png
   i=`expr $i + 1`
 done
 
