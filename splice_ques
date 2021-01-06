@@ -4,17 +4,16 @@
 #mkdir spliced
 
 # Clean up the image
-convert $1 -resize x800 spliced/$1
+convert `current` -resize x1200 processed/`current`
 textcleaner -c 0,72,0,36 -g -e stretch -f 20 -o 20 -t 30 -u -s 0 -T -p 20 spliced/$1 spliced/$1
 
 # Trim it from all sides
-smarttrim -m std -f $2 -s 485x695 -r yes spliced/$1 spliced/$1
+autotrim -f 80 -p vo split/`current` processed/`current`
 
 # Cut into 2 equal columns
-convert spliced/$1 -crop 240x695+0+0 spliced/${1}_1.png
-convert spliced/$1 -crop 240x695+240+0 spliced/${1}_2.png
+convert processed/`current` -crop 50%x100% split/`current`_%d.jpg
 
 # Now cut the individual columns into individual questions
 mkdir spliced/ques
-#./ind_cut spliced/${1}_1.png ./spliced/ques 30 20x40 1
-#./ind_cut spliced/${1}_2.png ./spliced/ques 30 20x40 1
+./ind_cut spliced/${1}_1.png ./spliced/ques 30 20x40 1
+./ind_cut spliced/${1}_2.png ./spliced/ques 30 20x40 1
