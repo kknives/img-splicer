@@ -15,5 +15,4 @@ convert processed/`current` -crop 50%x100% split/`current`_%d.jpg
 
 # Now cut the individual columns into individual questions
 mkdir spliced/ques
-./ind_cut spliced/${1}_1.png ./spliced/ques 30 20x40 1
-./ind_cut spliced/${1}_2.png ./spliced/ques 30 20x40 1
+ind_cut split/caps_103.png_1.png -o spliced -b 10x20 -m 5
