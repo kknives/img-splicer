@@ -9,34 +9,33 @@ if [ $# -lt 2 ]; then
     Note: The implementation is atleast O(n) on the height of the document
     so, resize before giving them the splice. Also, please deskew the image
     before giving it here. If you don't, you'll have to increase the margin,
-    but there is more white than black there, so you will have to set very high
-    thresholds but it won't work due to all the unwanted whiteness present.
+    but there is more white than black there, which may have problems with the
+    thresholds and may won't work due to all the whiteness present.
 
-    The threshold is the same threshold passed onto imagemagick. Specify it
-    (0-100) WITHOUT a %.
+    A previous version of this script used a manual threshold, but has been
+    replaced by geometric (Triangle) auto-thresholding.
 
-    The blur is also a imagemagick blur, specify it as (radius)x(sigma).
+    The blur is a imagemagick blur, specify it as (radius)x(sigma).
 
     The margin is the percentage of the width that contains the index numbers.
     A margin of 2 is 0.02% for the script.
 
     If you face any trouble with it not splitting up things,
     run
-    convert infile -crop {margin*width}x{height}+0+0 -blur {blur} -auto-level \
-      -threshold {threshold}% -scale 1x{height}! mask.jpg 
+    magick infile -crop {margin*width}x{height}+0+0 -blur {blur} -auto-level \
+      -auto-threshold -scale 1x{height}! mask.jpg 
 
-    Usage: $0 input-file output-dir threshold blur margin
+    Usage: $0 input-file -o output-dir -b blur -m margin
 
     Example
-    $0 file1.jpg ./out 60 40x80 2
+    $0 file1.jpg ./out 40x80 2
 EOF
 exit
 fi
 infile=$1
-outdir=$2
-threshold=$3
-blur=$4
-margin=$5
+outdir=$3
+blur=$5
+margin=$7
 
 # Setup a temporary directory for our work
 tmpdir=`mktemp -d "./ind_cut.XXXXXXXX"`
