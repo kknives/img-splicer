@@ -47,12 +47,12 @@ index=`expr $width \* $margin`
 index=`bc <<< "scale=0; $index / 100"`
 height=`convert "$infile" -format '%[height]' info:`
 
-convert $infile +repage -crop ${index}x${height}+0+0 -blur $blur -auto-level \
-  -threshold $threshold% -scale 1x${height}! -colorspace Gray $tmpdir/mask.mpc 
+magick $infile +repage -crop ${index}x${height}+0+0 -blur $blur -auto-level \
+  -auto-threshold Triangle -scale 1x${height}! -colorspace Gray $tmpdir/mask.mpc 
 
 # Give a preview to the user
-convert $tmpdir/mask.mpc -scale ${width}x${height}! -threshold $threshold -edge .5 -blur 0x.5 $tmpdir/prev_mask.png
-convert $infile \( $tmpdir/prev_mask.png -negate \) -compose Multiply -composite gif: | display
+magick $tmpdir/mask.mpc -scale ${width}x${height}! -edge .5 -blur 0x.5 $tmpdir/prev_mask.png
+magick $infile \( $tmpdir/prev_mask.png -negate \) -compose Multiply -composite gif: | display
 
 echo "Continue (Y/n)?"
 read proceed
