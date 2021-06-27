@@ -11,7 +11,7 @@ textcleaner -c 0,72,0,36 -g -e stretch -f 20 -o 20 -t 30 -u -s 0 -T -p 20 splice
 autotrim -f 80 -p vo split/`current` processed/`current`
 
 # Cut into 2 equal columns
-convert processed/`current` -crop 50%x100% split/`current`_%d.jpg
+convert processed/`current` -crop 50%x100% split/`current`_%d.png
 
 # Now cut the individual columns into individual questions
 mkdir spliced/ques

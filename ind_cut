@@ -23,7 +23,7 @@ if [ $# -lt 2 ]; then
     If you face any trouble with it not splitting up things,
     run
     magick infile -crop {margin*width}x{height}+0+0 -blur {blur} -auto-level \
-      -auto-threshold -scale 1x{height}! mask.jpg 
+      -auto-threshold Triangle -scale 1x{height}! mask.jpg 
 
     Usage: $0 input-file -o output-dir -b blur -m margin
 
@@ -48,7 +48,7 @@ index=`bc <<< "scale=0; $index / 100"`
 height=`convert "$infile" -format '%[height]' info:`
 
 magick $infile +repage -crop ${index}x${height}+0+0 -blur $blur -auto-level \
-  -auto-threshold Triangle -scale 1x${height}! -colorspace Gray $tmpdir/mask.mpc 
+  -auto-threshold Triangle -scale 1x${height}! -threshold 80% -colorspace Gray $tmpdir/mask.mpc 
 
 # Give a preview to the user
 magick $tmpdir/mask.mpc -scale ${width}x${height}! -edge .5 -blur 0x.5 $tmpdir/prev_mask.png
@@ -66,7 +66,8 @@ marker=0
 declare -a cuts # Store the cuts in an array
 while [ $row -lt $height ]
 do
-  color=`convert $tmpdir/mask.mpc +repage -crop 0x1+0+$row -format '%[pixel:s]\n' info:`
+  color=`magick $tmpdir/mask.mpc +repage -crop 0x1+0+$row -format '%[pixel:s]\n' info:`
+  echo $color
   if [ $marker -eq 0 ]
   then
     if [ "$color" = "gray(0)" ]
